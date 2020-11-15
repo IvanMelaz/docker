@@ -1,0 +1,63 @@
+version: '3.3'
+
+services:
+
+  freepbx:
+    build: .
+    image: flaviostutz/freepbx
+    ports:
+      - 8080:80
+      - 5060:5060/udp
+      - 5160:5160/udp
+      - 3306:3306
+      - 18000-18100:18000-18100/udp
+    # network_mode: host
+    restart: always
+    environment:
+      - MYSQL_DATABASE=freepbx-database
+    #  - MYSQL_DATABASE=database-telesoccorso.cqhnfqgml1n1.eu-west-1.rds.amazonaws.com
+      - MYSQL_PORT=3306
+      - MYSQL_USERNAME=tsc
+      - MYSQL_PASSWORD=Midara01
+      - MYSQL_USE_DB=freepbx
+      - ADMIN_PASSWORD=Matt30Fr3dd1_k3y1
+      - DISABLE_SIGNATURE_CHECK=true
+    #  - USE_CHAN_SIP=true
+    volumes:
+      - backup:/backup
+      - recordings:/var/spool/asterisk/monitor
+      - certificates:/etc/asterisk/keys
+    depends_on:
+        - "freepbx-database"
+    networks:
+      freepbx-network:
+        ipv4_address: 10.4.0.4
+        
+    freepbx-database:
+       image: mysql:latest
+       volumes:
+        - "./.mysql-data/db:/var/lib/mysql"
+       restart: always
+       ports:
+        - 3306:3306
+       environment:
+        - MYSQL_ROOT_PASSWORD: Midara01
+        - MYSQL_DATABASE: freepbx
+        - MYSQL_USER: tsc
+        - MYSQL_PASSWORD: Midara01
+    networks:
+      freepbx-network:
+        ipv4_address: 10.4.0.3
+  
+
+volumes:
+  backup:
+  recordings:
+  certificates:
+  
+networks:
+  freepbx-network:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.4.0.0/16
